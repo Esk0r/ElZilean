@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
-
-
-namespace ElZilean
+﻿namespace ElZilean
 {
+    using LeagueSharp.Common;
+
     internal class Program
     {
+        #region Methods
+
         private static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += Zilean.Game_OnGameLoad;
         }
+
+        #endregion
     }
 }

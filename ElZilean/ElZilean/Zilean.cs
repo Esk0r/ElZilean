@@ -1,44 +1,167 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LeagueSharp;
-using LeagueSharp.Common;
-using SharpDX;
-
-namespace ElZilean
+﻿namespace ElZilean
 {
-    enum Spells
-    {
-        Q, W, E, R
-    }
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
+    using LeagueSharp;
+    using LeagueSharp.Common;
+
+    internal enum Spells
+    {
+        Q,
+
+        W,
+
+        E,
+
+        R
+    }
 
     internal class Zilean
     {
-        private static String hero = "Zilean";
-        public static Obj_AI_Hero Player { get { return ObjectManager.Player; } }
-        public static Orbwalking.Orbwalker _orbwalker;
-        private static SpellSlot _ignite;
-        public static Dictionary<Spells, Spell> spells = new Dictionary<Spells, Spell>()
-        {
-            { Spells.Q, new Spell(SpellSlot.Q, 900)},
-            { Spells.W, new Spell(SpellSlot.W, 0)},
-            { Spells.E, new Spell(SpellSlot.E, 700)},
-            { Spells.R, new Spell(SpellSlot.R, 900)}
-        };
+        #region Static Fields
 
-        #region hitchance
+        public static Orbwalking.Orbwalker _orbwalker;
+
+        public static Dictionary<Spells, Spell> spells = new Dictionary<Spells, Spell>
+                                                             {
+                                                                 { Spells.Q, new Spell(SpellSlot.Q, 900) },
+                                                                 { Spells.W, new Spell(SpellSlot.W, 0) },
+                                                                 { Spells.E, new Spell(SpellSlot.E, 700) },
+                                                                 { Spells.R, new Spell(SpellSlot.R, 900) }
+                                                             };
+
+        private static readonly string hero = "Zilean";
+
+        private static SpellSlot _ignite;
+
+        #endregion
+
+        #region Public Properties
+
+        public static Obj_AI_Hero Player
+        {
+            get
+            {
+                return ObjectManager.Player;
+            }
+        }
+
+        #endregion
+
+        #region Properties
 
         private static HitChance CustomHitChance
         {
-            get { return GetHitchance(); }
+            get
+            {
+                return GetHitchance();
+            }
+        }
+
+        #endregion
+
+        #region Public Methods and Operators
+
+        public static void Game_OnGameLoad(EventArgs args)
+        {
+            if (ObjectManager.Player.CharData.BaseSkinName != hero)
+            {
+                return;
+            }
+
+            spells[Spells.Q].SetSkillshot(0.3f, 210f, 2000f, false, SkillshotType.SkillshotCircle);
+            _ignite = Player.GetSpellSlot("summonerdot");
+
+            ZileanMenu.Initialize();
+            Game.OnUpdate += OnGameUpdate;
+            Drawing.OnDraw += Drawings.Drawing_OnDraw;
+            Orbwalking.BeforeAttack += OrbwalkingBeforeAttack;
+        }
+
+        public static float GetComboDamage(Obj_AI_Base enemy)
+        {
+            var damage = 0d;
+
+            if (spells[Spells.Q].IsReady())
+            {
+                damage += Player.GetSpellDamage(enemy, SpellSlot.Q);
+            }
+
+            return (float)damage;
+        }
+
+        #endregion
+
+        #region Methods
+
+        private static void Combo()
+        {
+            var target = TargetSelector.GetSelectedTarget() != null
+                             ? TargetSelector.GetSelectedTarget()
+                             : TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
+
+            if (target == null)
+            {
+                return;
+            }
+
+            if (MenuCheck("ElZilean.Combo.Q") && spells[Spells.Q].IsReady()
+                && target.IsValidTarget(spells[Spells.Q].Range))
+            {
+                var pred = spells[Spells.Q].GetPrediction(target);
+                if (pred.Hitchance == HitChance.VeryHigh)
+                {
+                    spells[Spells.Q].Cast(pred.UnitPosition);
+                    Utility.DelayAction.Add(
+                        50,
+                        () =>
+                            {
+                                spells[Spells.W].Cast();
+                                spells[Spells.Q].Cast(pred.UnitPosition);
+                            });
+                }
+                else if (pred.Hitchance == HitChance.High)
+                {
+                    spells[Spells.Q].Cast(pred.CastPosition);
+                }
+            }
+
+            if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
+                && target.IsValidTarget(spells[Spells.E].Range))
+            {
+                spells[Spells.E].Cast(target);
+            }
+
+            if (MenuCheck("ElZilean.Combo.W") && target.HasBuff("ZileanQEnemyBomb"))
+            {
+                spells[Spells.W].Cast();
+            }
+
+            if (MenuCheck("ElZilean.Combo.Ignite") && target.IsValidTarget(600f)
+                && IgniteDamage(target) >= target.Health)
+            {
+                Player.Spellbook.CastSpell(_ignite, target);
+            }
+        }
+
+        private static void Flee()
+        {
+            if (spells[Spells.E].IsReady())
+            {
+                spells[Spells.E].Cast();
+            }
+
+            if (spells[Spells.W].IsReady())
+            {
+                spells[Spells.W].Cast();
+            }
         }
 
         private static HitChance GetHitchance()
         {
-            switch (ZileanMenu._menu.Item("ElZilean.hitChance").GetValue<StringList>().SelectedIndex)
+            switch (ZileanMenu.Menu.Item("ElZilean.hitChance").GetValue<StringList>().SelectedIndex)
             {
                 case 0:
                     return HitChance.Low;
@@ -53,39 +176,69 @@ namespace ElZilean
             }
         }
 
-        #endregion
-
-        #region Gameloaded 
-
-        public static void Game_OnGameLoad(EventArgs args)
+        private static void Harass()
         {
-            if (ObjectManager.Player.CharData.BaseSkinName != hero)
-                return;
-
-            Notifications.AddNotification("ElZilean by jQuery v1.0.1.5", 10000);
-            spells[Spells.Q].SetSkillshot(0.3f, 210f, 2000f, false, SkillshotType.SkillshotCircle);
-            _ignite = Player.GetSpellSlot("summonerdot");
-
-            ZileanMenu.Initialize();
-            Game.OnUpdate += OnGameUpdate;
-            Drawing.OnDraw += Drawings.Drawing_OnDraw;
-            Orbwalking.BeforeAttack += OrbwalkingBeforeAttack;
-        }
-
-        #endregion
-
-        private static void OrbwalkingBeforeAttack(Orbwalking.BeforeAttackEventArgs args)
-        {
-            if (ZileanMenu._menu.Item("ElZilean.SupportMode").GetValue<bool>())
+            var target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
+            if (target == null)
             {
-                if (args.Target is Obj_AI_Minion)
+                return;
+            }
+
+            if (MenuCheck("ElZilean.Harass.Q") && spells[Spells.Q].IsReady()
+                && Player.Distance(target) <= spells[Spells.Q].Range)
+            {
+                var pred = spells[Spells.Q].GetPrediction(target);
+                if (pred.Hitchance >= CustomHitChance)
                 {
-                        args.Process = false;
+                    spells[Spells.Q].Cast(target);
                 }
-            } 
+            }
+
+            if (MenuCheck("ElZilean.Harass.E") && spells[Spells.E].IsReady()
+                && Player.Distance(target) <= spells[Spells.E].Range)
+            {
+                spells[Spells.E].Cast(target);
+            }
         }
 
-        #region OnGameUpdate
+        private static float IgniteDamage(Obj_AI_Hero target)
+        {
+            if (_ignite == SpellSlot.Unknown || Player.Spellbook.CanUseSpell(_ignite) != SpellState.Ready)
+            {
+                return 0f;
+            }
+            return (float)Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
+        }
+
+        private static void LaneClear()
+        {
+            var minion = MinionManager.GetMinions(Player.ServerPosition, spells[Spells.Q].Range).FirstOrDefault();
+            if (minion == null)
+            {
+                return;
+            }
+
+            var bestFarmLocation =
+                MinionManager.GetBestCircularFarmLocation(
+                    MinionManager.GetMinions(spells[Spells.Q].Range).Select(m => m.ServerPosition.To2D()).ToList(),
+                    spells[Spells.Q].Width,
+                    spells[Spells.Q].Range);
+
+            if (MenuCheck("ElZilean.Clear.Q") && minion.IsValidTarget() && spells[Spells.Q].IsReady())
+            {
+                spells[Spells.Q].Cast(bestFarmLocation.Position);
+            }
+
+            if (MenuCheck("ElZilean.Clear.W") && !spells[Spells.Q].IsReady())
+            {
+                spells[Spells.W].Cast();
+            }
+        }
+
+        private static bool MenuCheck(string menuName)
+        {
+            return ZileanMenu.Menu.Item(menuName).IsActive();
+        }
 
         private static void OnGameUpdate(EventArgs args)
         {
@@ -105,238 +258,91 @@ namespace ElZilean
             UltAlly();
             SelfUlt();
 
-            if (ZileanMenu._menu.Item("FleeActive").GetValue<KeyBind>().Active)
+            if (ZileanMenu.Menu.Item("FleeActive").GetValue<KeyBind>().Active)
             {
                 Flee();
             }
 
-            if (ZileanMenu._menu.Item("ElZilean.AutoHarass").GetValue<KeyBind>().Active)
+            if (ZileanMenu.Menu.Item("ElZilean.AutoHarass").GetValue<KeyBind>().Active)
             {
                 var target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
                 if (target == null || !target.IsValid)
+                {
                     return;
+                }
 
-                var q = ZileanMenu._menu.Item("ElZilean.UseQAutoHarass").GetValue<bool>();
-                var e = ZileanMenu._menu.Item("ElZilean.UseEAutoHarass").GetValue<bool>();
-                var mana = ZileanMenu._menu.Item("ElZilean.harass.mana").GetValue<Slider>().Value;
+                var mana = ZileanMenu.Menu.Item("ElZilean.harass.mana").GetValue<Slider>().Value;
 
                 if (!(Player.ManaPercent >= mana))
                 {
                     return;
                 }
-                if (q && spells[Spells.Q].IsReady() && Player.Distance(target) <= spells[Spells.Q].Range)
+                if (MenuCheck("ElZilean.UseQAutoHarass") && spells[Spells.Q].IsReady()
+                    && Player.Distance(target) <= spells[Spells.Q].Range)
                 {
                     var prediction = spells[Spells.Q].GetPrediction(target);
                     if (prediction.Hitchance >= HitChance.VeryHigh)
+                    {
                         spells[Spells.Q].Cast(target);
+                    }
                 }
 
-                if (e && spells[Spells.E].IsReady() && Player.Distance(target) <= spells[Spells.E].Range)
+                if (MenuCheck("ElZilean.UseEAutoHarass") && spells[Spells.E].IsReady()
+                    && Player.Distance(target) <= spells[Spells.E].Range)
                 {
                     spells[Spells.E].Cast(target);
                 }
             }
         }
 
-        #endregion
-
-
-        #region Flee
-
-        private static void Flee()
+        private static void OrbwalkingBeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
-            if (spells[Spells.E].IsReady())
+            if (ZileanMenu.Menu.Item("ElZilean.SupportMode").GetValue<bool>())
             {
-                spells[Spells.E].Cast(Player);
-            }
-
-            if (spells[Spells.W].IsReady())
-            {
-                spells[Spells.W].Cast();
+                if (args.Target is Obj_AI_Minion)
+                {
+                    args.Process = false;
+                }
             }
         }
 
-        #endregion
-
-        #region selfult
-
         private static void SelfUlt()
         {
-            var useSelftUlt = ZileanMenu._menu.Item("ElZilean.R").GetValue<bool>();
-            var useSelftHp = ZileanMenu._menu.Item("ElZilean.HP").GetValue<Slider>().Value;
-
             if (Player.IsRecalling() || Player.InFountain())
+            {
                 return;
-            if (useSelftUlt && (Player.Health / Player.MaxHealth) * 100 <= useSelftHp && spells[Spells.R].IsReady() 
-                && Player.CountEnemiesInRange(650) > 0)
+            }
+
+            var useSelftHp = ZileanMenu.Menu.Item("ElZilean.HP").GetValue<Slider>().Value;
+            if (MenuCheck("ElZilean.R") && (Player.Health / Player.MaxHealth) * 100 <= useSelftHp
+                && spells[Spells.R].IsReady() && Player.CountEnemiesInRange(650) > 0)
             {
                 spells[Spells.R].Cast(Player);
             }
         }
 
-        #endregion
-
-        #region ultAlly
-
         private static void UltAlly()
         {
-            
-            var useult = ZileanMenu._menu.Item("ElZilean.useult").GetValue<bool>();
-            var allyMinHp = ZileanMenu._menu.Item("ElZilean.Ally.HP").GetValue<Slider>().Value;
+            var allyMinHp = ZileanMenu.Menu.Item("ElZilean.Ally.HP").GetValue<Slider>().Value;
 
-            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsAlly && !hero.IsMe))
+            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsAlly && !x.IsMe))
             {
-                var getAllys = ZileanMenu._menu.Item("ElZilean.Cast.Ult.Ally" + hero.BaseSkinName);
+                var getAllies = ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName);
 
                 if (Player.IsRecalling() || Player.InFountain())
-                    return;
-                if (useult && ((hero.Health / hero.MaxHealth) * 100 <= allyMinHp) && spells[Spells.R].IsReady() &&
-                    Player.CountEnemiesInRange(1000) > 0 &&
-                    (hero.Distance(Player.ServerPosition) <= spells[Spells.R].Range))
                 {
-                    if (getAllys != null && getAllys.GetValue<bool>())
+                    return;
+                }
+                if (MenuCheck("ElZilean.useult") && ((hero.Health / hero.MaxHealth) * 100 <= allyMinHp)
+                    && spells[Spells.R].IsReady() && Player.CountEnemiesInRange(1000) > 0
+                    && (hero.Distance(Player.ServerPosition) <= spells[Spells.R].Range))
+                {
+                    if (getAllies != null && getAllies.GetValue<bool>())
                     {
                         spells[Spells.R].Cast(hero);
                     }
                 }
             }
-        }
-
-        #endregion
-
-        #region Laneclear 
-
-        private static void LaneClear()
-        {
-            var minion = MinionManager.GetMinions(Player.ServerPosition, spells[Spells.Q].Range).FirstOrDefault();
-            if (minion == null || minion.Name.ToLower().Contains("ward")) return;
-
-            var qWaveClear = ZileanMenu._menu.Item("ElZilean.Clear.Q").GetValue<bool>();
-            var wWaveClear = ZileanMenu._menu.Item("ElZilean.Clear.W").GetValue<bool>();
-
-            var bestFarmLocation = MinionManager.GetBestCircularFarmLocation(MinionManager.GetMinions(spells[Spells.Q].Range, MinionTypes.All, MinionTeam.Enemy).Select(m => m.ServerPosition.To2D()).ToList(), spells[Spells.Q].Width, spells[Spells.Q].Range);
-
-            if (qWaveClear && minion.IsValidTarget() && spells[Spells.Q].IsReady())
-            {
-                //Spells.W.Cast();
-                spells[Spells.Q].Cast(bestFarmLocation.Position);
-            }
-
-            if (wWaveClear && !spells[Spells.Q].IsReady())
-            {
-                spells[Spells.W].Cast();
-            }
-        }
-
-        #endregion
-
-        #region Harass
-
-        private static void Harass()
-        {
-            var target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
-            if (target == null || !target.IsValid)
-                return;
-
-
-            var qCombo = ZileanMenu._menu.Item("ElZilean.Harass.Q").GetValue<bool>();
-            var eCombo = ZileanMenu._menu.Item("ElZilean.Harass.E").GetValue<bool>();
-
-
-            if (qCombo && spells[Spells.Q].IsReady() && Player.Distance(target) <= spells[Spells.Q].Range)
-            {
-                var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance >= CustomHitChance)
-                    spells[Spells.Q].Cast(target);
-            }
-
-            if (eCombo && spells[Spells.E].IsReady() && Player.Distance(target) <= spells[Spells.E].Range)
-            {
-                spells[Spells.E].Cast(target);
-            }
-        }
-
-
-        #endregion
-
-        #region Combo
-
-        private static void Combo()
-        {
-            Obj_AI_Hero target;
-            target = TargetSelector.GetSelectedTarget();
-            if (target == null || !target.IsValidTarget())
-            {
-                target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
-            }
-
-            if (TargetSelector.GetSelectedTarget() != null)
-            {
-                if (Vector3.Distance(Player.ServerPosition, target.ServerPosition) < spells[Spells.Q].Range)
-                {
-                    target = TargetSelector.GetSelectedTarget();
-                }
-            }
-
-             if (target == null || !target.IsValid)
-                return;
-
-            var qCombo = ZileanMenu._menu.Item("ElZilean.Combo.Q").GetValue<bool>();
-            var eCombo = ZileanMenu._menu.Item("ElZilean.Combo.E").GetValue<bool>();
-            var wCombo = ZileanMenu._menu.Item("ElZilean.Combo.W").GetValue<bool>();
-            var useIgnite = ZileanMenu._menu.Item("ElZilean.Combo.Ignite").GetValue<bool>();
- 
-            if (qCombo && spells[Spells.Q].IsReady() && Player.Distance(target) < spells[Spells.Q].Range)
-            {
-                var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance >= CustomHitChance)
-                    spells[Spells.Q].Cast(target);
-            }
-
-            if (eCombo && spells[Spells.E].IsReady() && Vector3.Distance(Player.ServerPosition, target.ServerPosition) < spells[Spells.E].Range)
-            {
-                spells[Spells.E].Cast(target);
-            }
-
-            if (target.HasBuff("ZileanQEnemyBomb") && wCombo)
-            {
-                spells[Spells.W].Cast();
-            }
-
-            if (Player.Distance(target) <= 600 && IgniteDamage(target) >= target.Health &&
-                useIgnite)
-            {
-                Player.Spellbook.CastSpell(_ignite, target);
-            }
-        }
-
-        #endregion
-
-        #region GetComboDamage   
-
-        public static float GetComboDamage(Obj_AI_Base enemy)
-        {
-            var damage = 0d;
-
-            if (spells[Spells.Q].IsReady())
-            {
-                damage += Player.GetSpellDamage(enemy, SpellSlot.Q);
-            }
-
-            return (float)damage;
-        }
-
-        #endregion
-
-        #region Ignite
-
-        private static float IgniteDamage(Obj_AI_Hero target)
-        {
-            if (_ignite == SpellSlot.Unknown || Player.Spellbook.CanUseSpell(_ignite) != SpellState.Ready)
-            {
-                return 0f;
-            }
-            return (float)Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
         }
 
         #endregion
