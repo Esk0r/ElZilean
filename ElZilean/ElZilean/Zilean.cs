@@ -98,31 +98,35 @@
 
         private static void Combo()
         {
-            var target = TargetSelector.GetSelectedTarget() != null
-                             ? TargetSelector.GetSelectedTarget()
-                             : TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
+            var qTarget =
+               HeroManager.Enemies.Find(
+                   x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
+            var target = qTarget ?? TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Physical);
 
-            if (target == null)
+            if (!target.IsValidTarget())
             {
                 return;
             }
+
+            TargetSelector.SetTarget(target);
+            _orbwalker.ForceTarget(target);
 
             if (MenuCheck("ElZilean.Combo.Q") && spells[Spells.Q].IsReady()
                 && target.IsValidTarget(spells[Spells.Q].Range))
             {
                 var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance == HitChance.VeryHigh)
+                if (pred.Hitchance >= HitChance.VeryHigh)
                 {
-                    spells[Spells.Q].Cast(pred.UnitPosition);
+                    spells[Spells.Q].Cast(pred.CastPosition);
                     Utility.DelayAction.Add(
                         50,
                         () =>
                             {
+                                spells[Spells.Q].Cast(pred.CastPosition);
                                 spells[Spells.W].Cast();
-                                spells[Spells.Q].Cast(pred.UnitPosition);
                             });
                 }
-                else if (pred.Hitchance == HitChance.High)
+                else
                 {
                     spells[Spells.Q].Cast(pred.CastPosition);
                 }
