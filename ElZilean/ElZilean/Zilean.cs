@@ -117,18 +117,18 @@
                 var pred = spells[Spells.Q].GetPrediction(target);
                 if (pred.Hitchance >= HitChance.VeryHigh)
                 {
-                    spells[Spells.Q].Cast(pred.CastPosition);
+                    spells[Spells.Q].Cast(target);
                     Utility.DelayAction.Add(
                         50,
                         () =>
                             {
-                                spells[Spells.Q].Cast(pred.CastPosition);
+                                spells[Spells.Q].Cast(target); //pred.CastPosition
                                 spells[Spells.W].Cast();
                             });
                 }
                 else
                 {
-                    spells[Spells.Q].Cast(pred.CastPosition);
+                    spells[Spells.Q].Cast(target);
                 }
             }
 
