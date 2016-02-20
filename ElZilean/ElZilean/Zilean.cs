@@ -117,12 +117,13 @@
                 var pred = spells[Spells.Q].GetPrediction(target);
                 if (pred.Hitchance >= HitChance.High)
                 {
-                    spells[Spells.Q].Cast(target);
+                    spells[Spells.Q].Cast(pred.CastPosition); 
+                    // check if someone in range has the Q buff
                     Utility.DelayAction.Add(
                         250,
                         () =>
                             {
-                                spells[Spells.Q].Cast(target); //pred.CastPosition
+                                spells[Spells.Q].Cast(pred.CastPosition); //pred.CastPosition
                                 spells[Spells.W].Cast();
                             });
                 }
