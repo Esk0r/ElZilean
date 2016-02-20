@@ -99,8 +99,7 @@
         private static void Combo()
         {
             var qTarget =
-               HeroManager.Enemies.Find(
-                   x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
+                HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
             var target = qTarget ?? TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
 
             if (!target.IsValidTarget())
@@ -112,7 +111,7 @@
             _orbwalker.ForceTarget(target);
 
             if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
-               && target.IsValidTarget(spells[Spells.E].Range))
+                && target.IsValidTarget(spells[Spells.E].Range))
             {
                 spells[Spells.E].Cast(target);
             }
@@ -123,25 +122,16 @@
                 var pred = spells[Spells.Q].GetPrediction(target);
                 if (pred.Hitchance >= HitChance.High)
                 {
-                    spells[Spells.Q].Cast(pred.CastPosition); 
-                    // check if someone in range has the Q buff
-                    Utility.DelayAction.Add(
-                        250,
-                        () =>
-                            {
-                                spells[Spells.Q].Cast(pred.CastPosition); //pred.CastPosition
-                                spells[Spells.W].Cast();
-                            });
-                }
-                else
-                {
-                    spells[Spells.Q].Cast(target);
+                    spells[Spells.Q].Cast(pred.UnitPosition);
                 }
             }
-          
-            if (MenuCheck("ElZilean.Combo.W") && target.HasBuff("ZileanQEnemyBomb"))
+
+            var zileanQEnemyBomb =
+                HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
+
+            if (MenuCheck("ElZilean.Combo.W") && zileanQEnemyBomb != null)
             {
-                spells[Spells.W].Cast();
+                Utility.DelayAction.Add(250, () => { spells[Spells.W].Cast(); });
             }
 
             if (MenuCheck("ElZilean.Combo.Ignite") && target.IsValidTarget(600f)
