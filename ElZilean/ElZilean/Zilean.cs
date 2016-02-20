@@ -101,7 +101,7 @@
             var qTarget =
                HeroManager.Enemies.Find(
                    x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
-            var target = qTarget ?? TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Physical);
+            var target = qTarget ?? TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
 
             if (!target.IsValidTarget())
             {
@@ -115,11 +115,11 @@
                 && target.IsValidTarget(spells[Spells.Q].Range))
             {
                 var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance >= HitChance.VeryHigh)
+                if (pred.Hitchance >= HitChance.High)
                 {
                     spells[Spells.Q].Cast(target);
                     Utility.DelayAction.Add(
-                        50,
+                        250,
                         () =>
                             {
                                 spells[Spells.Q].Cast(target); //pred.CastPosition
