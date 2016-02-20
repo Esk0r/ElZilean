@@ -111,6 +111,12 @@
             TargetSelector.SetTarget(target);
             _orbwalker.ForceTarget(target);
 
+            if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
+               && target.IsValidTarget(spells[Spells.E].Range))
+            {
+                spells[Spells.E].Cast(target);
+            }
+
             if (MenuCheck("ElZilean.Combo.Q") && spells[Spells.Q].IsReady()
                 && target.IsValidTarget(spells[Spells.Q].Range))
             {
@@ -132,13 +138,7 @@
                     spells[Spells.Q].Cast(target);
                 }
             }
-
-            if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
-                && target.IsValidTarget(spells[Spells.E].Range))
-            {
-                spells[Spells.E].Cast(target);
-            }
-
+          
             if (MenuCheck("ElZilean.Combo.W") && target.HasBuff("ZileanQEnemyBomb"))
             {
                 spells[Spells.W].Cast();
