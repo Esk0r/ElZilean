@@ -32,7 +32,7 @@
                                                                  { Spells.R, new Spell(SpellSlot.R, 900) }
                                                              };
 
-        private static SpellSlot _ignite;
+        private static SpellSlot ignite;
 
         #endregion
 
@@ -58,7 +58,7 @@
             }
 
             spells[Spells.Q].SetSkillshot(0.3f, 210f, 2000f, false, SkillshotType.SkillshotCircle);
-            _ignite = Player.GetSpellSlot("summonerdot");
+            ignite = Player.GetSpellSlot("summonerdot");
 
             ZileanMenu.Initialize();
             Game.OnUpdate += OnGameUpdate;
@@ -96,44 +96,6 @@
 
         #region Methods
 
-        private static void TrickEnemy()
-        {
-            Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
-            var target = TargetSelector.GetSelectedTarget();
-            if (target == null) return;
-            var pred = spells[Spells.Q].GetSPrediction(target);
-            if (target.Distance(Player) > spells[Spells.Q].Range) return;
-            if (pred.HitChance == HitChance.VeryHigh)
-            {
-                spells[Spells.Q].Cast(pred.UnitPosition);
-                spells[Spells.W].Cast();
-                spells[Spells.Q].Cast(pred.UnitPosition);
-            }else
-            {
-                var bestTarget = ObjectManager.Get<Obj_AI_Base>().Where(unit => unit.Distance(target) <= 425 && unit.IsValidTarget() && unit.NetworkId != target.NetworkId).OrderBy(enemy => enemy.Distance(target)).FirstOrDefault();
-                if(bestTarget == null)return;
-                if (bestTarget.IsMinion)
-                {
-                    spells[Spells.Q].Cast(bestTarget.Position);
-                    spells[Spells.W].Cast();
-                    spells[Spells.Q].Cast(bestTarget.Position);
-                }
-                else
-                {
-                    var temp = bestTarget as Obj_AI_Hero;
-                    if (temp == null) return;
-                    pred = spells[Spells.Q].GetSPrediction(temp);
-                    if(pred.HitChance >= HitChance.Medium)
-                    {
-                        spells[Spells.Q].Cast(bestTarget.Position);
-                        spells[Spells.W].Cast();
-                        spells[Spells.Q].Cast(bestTarget.Position);
-                    }
-                }
-            }
-
-
-        }
         private static void Combo()
         {
             var qTarget =
@@ -175,7 +137,7 @@
             if (MenuCheck("ElZilean.Combo.Ignite") && target.IsValidTarget(600f)
                 && IgniteDamage(target) >= target.Health)
             {
-                Player.Spellbook.CastSpell(_ignite, target);
+                Player.Spellbook.CastSpell(ignite, target);
             }
         }
 
@@ -219,7 +181,7 @@
 
         private static float IgniteDamage(Obj_AI_Hero target)
         {
-            if (_ignite == SpellSlot.Unknown || Player.Spellbook.CanUseSpell(_ignite) != SpellState.Ready)
+            if (ignite == SpellSlot.Unknown || Player.Spellbook.CanUseSpell(ignite) != SpellState.Ready)
             {
                 return 0f;
             }
@@ -270,11 +232,14 @@
                     Harass();
                     break;
             }
-           
 
             UltAlly();
             SelfUlt();
-            if (ZileanMenu._menu.Item("ElZilean.Trick").GetValue<KeyBind>().Active) TrickEnemy();
+            if (ZileanMenu.Menu.Item("ElZilean.Trick").GetValue<KeyBind>().Active)
+            {
+                TrickEnemy();
+            }
+
             if (ZileanMenu.Menu.Item("FleeActive").GetValue<KeyBind>().Active)
             {
                 Flee();
@@ -335,6 +300,61 @@
                 && spells[Spells.R].IsReady() && Player.CountEnemiesInRange(650) > 0)
             {
                 spells[Spells.R].Cast(Player);
+            }
+        }
+
+        private static void TrickEnemy()
+        {
+            Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+            var target = TargetSelector.GetSelectedTarget();
+            if (target == null)
+            {
+                return;
+            }
+
+            var pred = spells[Spells.Q].GetPrediction(target);
+            if (pred.Hitchance >= HitChance.High && target.IsValidTarget(spells[Spells.Q].Range))
+            {
+                spells[Spells.Q].Cast(pred.UnitPosition);
+                spells[Spells.W].Cast();
+                spells[Spells.Q].Cast(pred.UnitPosition);
+            }
+            else
+            {
+                var bestTarget =
+                    ObjectManager.Get<Obj_AI_Base>()
+                        .Where(
+                            unit =>
+                            unit.Distance(target) <= 425 && unit.IsValidTarget() && unit.NetworkId != target.NetworkId)
+                        .OrderBy(enemy => enemy.Distance(target))
+                        .FirstOrDefault();
+
+                if (bestTarget == null)
+                {
+                    return;
+                }
+
+                if (bestTarget.IsMinion)
+                {
+                    spells[Spells.Q].Cast(bestTarget.Position);
+                    spells[Spells.W].Cast();
+                    spells[Spells.Q].Cast(bestTarget.Position);
+                }
+                else
+                {
+                    var temp = bestTarget as Obj_AI_Hero;
+                    if (temp == null)
+                    {
+                        return;
+                    }
+                    var prediction = spells[Spells.Q].GetPrediction(temp);
+                    if (prediction.Hitchance >= HitChance.High && target.IsValidTarget(spells[Spells.Q].Range))
+                    {
+                        spells[Spells.Q].Cast(bestTarget.Position);
+                        spells[Spells.W].Cast();
+                        spells[Spells.Q].Cast(bestTarget.Position);
+                    }
+                }
             }
         }
 
