@@ -22,7 +22,7 @@
     {
         #region Static Fields
 
-        public static Orbwalking.Orbwalker _orbwalker;
+        public static Orbwalking.Orbwalker Orbwalker;
 
         public static Dictionary<Spells, Spell> spells = new Dictionary<Spells, Spell>
                                                              {
@@ -31,8 +31,6 @@
                                                                  { Spells.E, new Spell(SpellSlot.E, 700) },
                                                                  { Spells.R, new Spell(SpellSlot.R, 900) }
                                                              };
-
-        private static readonly string hero = "Zilean";
 
         private static SpellSlot _ignite;
 
@@ -50,23 +48,11 @@
 
         #endregion
 
-        #region Properties
-
-        private static HitChance CustomHitChance
-        {
-            get
-            {
-                return GetHitchance();
-            }
-        }
-
-        #endregion
-
         #region Public Methods and Operators
 
         public static void Game_OnGameLoad(EventArgs args)
         {
-            if (ObjectManager.Player.CharData.BaseSkinName != hero)
+            if (ObjectManager.Player.CharData.BaseSkinName != "Zilean")
             {
                 return;
             }
@@ -82,14 +68,28 @@
 
         public static float GetComboDamage(Obj_AI_Base enemy)
         {
-            var damage = 0d;
-
-            if (spells[Spells.Q].IsReady())
+            try
             {
-                damage += Player.GetSpellDamage(enemy, SpellSlot.Q);
+                float damage = 0;
+
+                if (!Player.IsWindingUp)
+                {
+                    damage += (float)ObjectManager.Player.GetAutoAttackDamage(enemy, true);
+                }
+
+                if (spells[Spells.Q].IsReady())
+                {
+                    damage += spells[Spells.Q].GetDamage(enemy);
+                }
+
+                return damage;
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
             }
 
-            return (float)damage;
+            return 0;
         }
 
         #endregion
@@ -108,7 +108,7 @@
             }
 
             TargetSelector.SetTarget(target);
-            _orbwalker.ForceTarget(target);
+            Orbwalker.ForceTarget(target);
 
             if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
                 && target.IsValidTarget(spells[Spells.E].Range))
@@ -154,23 +154,6 @@
             }
         }
 
-        private static HitChance GetHitchance()
-        {
-            switch (ZileanMenu.Menu.Item("ElZilean.hitChance").GetValue<StringList>().SelectedIndex)
-            {
-                case 0:
-                    return HitChance.Low;
-                case 1:
-                    return HitChance.Medium;
-                case 2:
-                    return HitChance.High;
-                case 3:
-                    return HitChance.VeryHigh;
-                default:
-                    return HitChance.Medium;
-            }
-        }
-
         private static void Harass()
         {
             var target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
@@ -180,17 +163,17 @@
             }
 
             if (MenuCheck("ElZilean.Harass.Q") && spells[Spells.Q].IsReady()
-                && Player.Distance(target) <= spells[Spells.Q].Range)
+                && target.IsValidTarget(spells[Spells.Q].Range))
             {
                 var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance >= CustomHitChance)
+                if (pred.Hitchance >= HitChance.High)
                 {
-                    spells[Spells.Q].Cast(target);
+                    spells[Spells.Q].Cast(pred.UnitPosition);
                 }
             }
 
             if (MenuCheck("ElZilean.Harass.E") && spells[Spells.E].IsReady()
-                && Player.Distance(target) <= spells[Spells.E].Range)
+                && target.IsValidTarget(spells[Spells.E].Range))
             {
                 spells[Spells.E].Cast(target);
             }
@@ -237,7 +220,7 @@
 
         private static void OnGameUpdate(EventArgs args)
         {
-            switch (_orbwalker.ActiveMode)
+            switch (Orbwalker.ActiveMode)
             {
                 case Orbwalking.OrbwalkingMode.Combo:
                     Combo();

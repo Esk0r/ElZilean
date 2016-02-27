@@ -12,7 +12,7 @@
 
         public static void Drawing_OnDraw(EventArgs args)
         {
-            var drawOff = ZileanMenu.Menu.Item("ElZilean.Draw.off").GetValue<bool>();
+            var drawOff = ZileanMenu.Menu.Item("ElZilean.Draw.off").IsActive();
             var drawQ = ZileanMenu.Menu.Item("ElZilean.Draw.Q").GetValue<Circle>();
             var drawW = ZileanMenu.Menu.Item("ElZilean.Draw.W").GetValue<Circle>();
             var drawE = ZileanMenu.Menu.Item("ElZilean.Draw.E").GetValue<Circle>();

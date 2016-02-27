@@ -1,6 +1,7 @@
 ﻿namespace ElZilean
 {
     using System;
+    using System.Drawing;
     using System.Linq;
 
     using LeagueSharp;
@@ -22,7 +23,7 @@
 
             var orbwalkerMenu = new Menu("Orbwalker", "orbwalker");
             {
-                Zilean._orbwalker = new Orbwalking.Orbwalker(orbwalkerMenu);
+                Zilean.Orbwalker = new Orbwalking.Orbwalker(orbwalkerMenu);
             }
 
             Menu.AddSubMenu(orbwalkerMenu);
@@ -41,9 +42,6 @@
                 comboMenu.AddItem(
                     new MenuItem("ElZilean.Combo.W", "Use W to reset Q when target is marked").SetValue(true));
                 comboMenu.AddItem(new MenuItem("ElZilean.Combo.Ignite", "Use Ignite").SetValue(true));
-                comboMenu.AddItem(
-                    new MenuItem("ElZilean.hitChance", "Hitchance").SetValue(
-                        new StringList(new[] { "Low", "Medium", "High", "Very High" }, 3)));
                 comboMenu.AddItem(new MenuItem("ComboActive", "Combo!").SetValue(new KeyBind(32, KeyBindType.Press)));
             }
 
@@ -57,7 +55,7 @@
 
                 harassMenu.SubMenu("AutoHarass")
                     .AddItem(
-                        new MenuItem("ElZilean.AutoHarass", "[Toggle] Auto harass", false).SetValue(
+                        new MenuItem("ElZilean.AutoHarass", "[Toggle] Auto harass").SetValue(
                             new KeyBind("U".ToCharArray()[0], KeyBindType.Toggle)));
                 harassMenu.SubMenu("AutoHarass").AddItem(new MenuItem("spacespacespace", ""));
                 harassMenu.SubMenu("AutoHarass")
@@ -99,18 +97,30 @@
                 miscMenu.AddItem(new MenuItem("ElZilean.Draw.W", "Draw W").SetValue(new Circle()));
                 miscMenu.AddItem(new MenuItem("ElZilean.Draw.E", "Draw E").SetValue(new Circle()));
                 miscMenu.AddItem(new MenuItem("ElZilean.Draw.R", "Draw R").SetValue(new Circle()));
-            }
 
-            var dmgAfterComboItem = new MenuItem("ElZilean.DrawComboDamage", "Draw combo damage").SetValue(true);
-            miscMenu.AddItem(dmgAfterComboItem);
+                var dmgAfterE = new MenuItem("ElZilean.DrawComboDamage", "Draw combo damage").SetValue(true);
+                var drawFill =
+                    new MenuItem("ElZilean.DrawColour", "Fill colour", true).SetValue(new Circle(true, Color.Goldenrod));
+                miscMenu.AddItem(drawFill);
+                miscMenu.AddItem(dmgAfterE);
 
-            Utility.HpBarDamageIndicator.DamageToUnit = Zilean.GetComboDamage;
-            Utility.HpBarDamageIndicator.Enabled = dmgAfterComboItem.GetValue<bool>();
-            dmgAfterComboItem.ValueChanged +=
-                delegate(object sender, OnValueChangeEventArgs eventArgs)
+                DamageIndicator.DamageToUnit = Zilean.GetComboDamage;
+                DamageIndicator.Enabled = dmgAfterE.GetValue<bool>();
+                DamageIndicator.Fill = drawFill.GetValue<Circle>().Active;
+                DamageIndicator.FillColor = drawFill.GetValue<Circle>().Color;
+
+                dmgAfterE.ValueChanged +=
+                    delegate(object sender, OnValueChangeEventArgs eventArgs)
+                        {
+                            DamageIndicator.Enabled = eventArgs.GetNewValue<bool>();
+                        };
+
+                drawFill.ValueChanged += delegate(object sender, OnValueChangeEventArgs eventArgs)
                     {
-                        Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<bool>();
+                        DamageIndicator.Fill = eventArgs.GetNewValue<Circle>().Active;
+                        DamageIndicator.FillColor = eventArgs.GetNewValue<Circle>().Color;
                     };
+            }
 
             miscMenu.AddItem(new MenuItem("ElZilean.SupportMode", "Support mode").SetValue(false));
 
