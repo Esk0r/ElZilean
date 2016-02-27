@@ -96,6 +96,44 @@
 
         #region Methods
 
+        private static void TrickEnemy()
+        {
+            Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+            var target = TargetSelector.GetSelectedTarget();
+            if (target == null) return;
+            var pred = spells[Spells.Q].GetSPrediction(target);
+            if (target.Distance(Player) > spells[Spells.Q].Range) return;
+            if (pred.HitChance == HitChance.VeryHigh)
+            {
+                spells[Spells.Q].Cast(pred.UnitPosition);
+                spells[Spells.W].Cast();
+                spells[Spells.Q].Cast(pred.UnitPosition);
+            }else
+            {
+                var bestTarget = ObjectManager.Get<Obj_AI_Base>().Where(unit => unit.Distance(target) <= 425 && unit.IsValidTarget() && unit.NetworkId != target.NetworkId).OrderBy(enemy => enemy.Distance(target)).FirstOrDefault();
+                if(bestTarget == null)return;
+                if (bestTarget.IsMinion)
+                {
+                    spells[Spells.Q].Cast(bestTarget.Position);
+                    spells[Spells.W].Cast();
+                    spells[Spells.Q].Cast(bestTarget.Position);
+                }
+                else
+                {
+                    var temp = bestTarget as Obj_AI_Hero;
+                    if (temp == null) return;
+                    pred = spells[Spells.Q].GetSPrediction(temp);
+                    if(pred.HitChance >= HitChance.Medium)
+                    {
+                        spells[Spells.Q].Cast(bestTarget.Position);
+                        spells[Spells.W].Cast();
+                        spells[Spells.Q].Cast(bestTarget.Position);
+                    }
+                }
+            }
+
+
+        }
         private static void Combo()
         {
             var qTarget =
@@ -232,10 +270,11 @@
                     Harass();
                     break;
             }
+           
 
             UltAlly();
             SelfUlt();
-
+            if (ZileanMenu._menu.Item("ElZilean.Trick").GetValue<KeyBind>().Active) TrickEnemy();
             if (ZileanMenu.Menu.Item("FleeActive").GetValue<KeyBind>().Active)
             {
                 Flee();
