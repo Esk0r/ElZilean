@@ -248,19 +248,18 @@
             if (ZileanMenu.Menu.Item("ElZilean.AutoHarass").GetValue<KeyBind>().Active)
             {
                 var target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
-                if (target == null || !target.IsValid)
+                if (!target.IsValidTarget())
                 {
                     return;
                 }
 
-                var mana = ZileanMenu.Menu.Item("ElZilean.harass.mana").GetValue<Slider>().Value;
-
-                if (!(Player.ManaPercent >= mana))
+                if (Player.ManaPercent <= ZileanMenu.Menu.Item("ElZilean.harass.mana").GetValue<Slider>().Value)
                 {
                     return;
                 }
+
                 if (MenuCheck("ElZilean.UseQAutoHarass") && spells[Spells.Q].IsReady()
-                    && Player.Distance(target) <= spells[Spells.Q].Range)
+                    && target.IsValidTarget(spells[Spells.Q].Range))
                 {
                     var prediction = spells[Spells.Q].GetPrediction(target);
                     if (prediction.Hitchance >= HitChance.VeryHigh)
@@ -270,7 +269,7 @@
                 }
 
                 if (MenuCheck("ElZilean.UseEAutoHarass") && spells[Spells.E].IsReady()
-                    && Player.Distance(target) <= spells[Spells.E].Range)
+                    && target.IsValidTarget(spells[Spells.E].Range))
                 {
                     spells[Spells.E].Cast(target);
                 }
@@ -279,7 +278,7 @@
 
         private static void OrbwalkingBeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
-            if (ZileanMenu.Menu.Item("ElZilean.SupportMode").GetValue<bool>())
+            if (ZileanMenu.Menu.Item("ElZilean.SupportMode").IsActive())
             {
                 if (args.Target is Obj_AI_Minion)
                 {
@@ -306,8 +305,8 @@
         private static void TrickEnemy()
         {
             Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
-            var target = TargetSelector.GetSelectedTarget();
-            if (target == null)
+            var target = TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
+            if (!target.IsValidTarget())
             {
                 return;
             }
@@ -343,10 +342,11 @@
                 else
                 {
                     var temp = bestTarget as Obj_AI_Hero;
-                    if (temp == null)
+                    if (!temp.IsValidTarget())
                     {
                         return;
                     }
+
                     var prediction = spells[Spells.Q].GetPrediction(temp);
                     if (prediction.Hitchance >= HitChance.High && target.IsValidTarget(spells[Spells.Q].Range))
                     {
@@ -360,21 +360,21 @@
 
         private static void UltAlly()
         {
-            var allyMinHp = ZileanMenu.Menu.Item("ElZilean.Ally.HP").GetValue<Slider>().Value;
+            if (Player.IsRecalling() || Player.InFountain())
+            {
+                return;
+            }
 
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsAlly && !x.IsMe))
             {
-                var getAllies = ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName);
-
-                if (Player.IsRecalling() || Player.InFountain())
-                {
-                    return;
-                }
-                if (MenuCheck("ElZilean.useult") && ((hero.Health / hero.MaxHealth) * 100 <= allyMinHp)
+                if (MenuCheck("ElZilean.useult")
+                    && ((hero.Health / hero.MaxHealth) * 100
+                        <= ZileanMenu.Menu.Item("ElZilean.Ally.HP").GetValue<Slider>().Value)
                     && spells[Spells.R].IsReady() && Player.CountEnemiesInRange(1000) > 0
                     && (hero.Distance(Player.ServerPosition) <= spells[Spells.R].Range))
                 {
-                    if (getAllies != null && getAllies.GetValue<bool>())
+                    if (ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName) != null
+                        && ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName).IsActive())
                     {
                         spells[Spells.R].Cast(hero);
                     }
