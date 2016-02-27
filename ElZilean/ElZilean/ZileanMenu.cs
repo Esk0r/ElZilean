@@ -43,7 +43,7 @@
                     new MenuItem("ElZilean.Combo.W", "Use W to reset Q when target is marked").SetValue(true));
                 comboMenu.AddItem(new MenuItem("ElZilean.Combo.Ignite", "Use Ignite").SetValue(true));
                 comboMenu.AddItem(
-                    new MenuItem("ElZilean.Trick", "Trick enemy").SetValue(new KeyBind("T".ToCharArray()[0], KeyBindType.Press)));
+                    new MenuItem("ElZilean.Trick", "Q at nearby units").SetValue(new KeyBind("T".ToCharArray()[0], KeyBindType.Press)));
             }
 
             var harassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
