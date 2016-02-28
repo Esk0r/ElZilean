@@ -116,6 +116,9 @@
                 spells[Spells.E].Cast(target);
             }
 
+            var zileanQEnemyBomb =
+               HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
+
             if (MenuCheck("ElZilean.Combo.Q") && spells[Spells.Q].IsReady()
                 && target.IsValidTarget(spells[Spells.Q].Range))
             {
@@ -126,12 +129,9 @@
                 }
             }
 
-            var zileanQEnemyBomb =
-                HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
-
             if (MenuCheck("ElZilean.Combo.W") && zileanQEnemyBomb != null)
             {
-                Utility.DelayAction.Add(200, () => { spells[Spells.W].Cast(); });
+                Utility.DelayAction.Add(100, () => { spells[Spells.W].Cast(); });
             }
 
             if (MenuCheck("ElZilean.Combo.Ignite") && target.IsValidTarget(600f)
