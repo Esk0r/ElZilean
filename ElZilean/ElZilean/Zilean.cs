@@ -137,6 +137,8 @@
 
         private static void Flee()
         {
+            Orbwalking.MoveTo(Game.CursorPos);
+
             if (spells[Spells.E].IsReady())
             {
                 spells[Spells.E].Cast();
