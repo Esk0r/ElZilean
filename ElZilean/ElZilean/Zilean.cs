@@ -38,13 +38,7 @@
 
         #region Public Properties
 
-        public static Obj_AI_Hero Player
-        {
-            get
-            {
-                return ObjectManager.Player;
-            }
-        }
+        public static Obj_AI_Hero Player => ObjectManager.Player;
 
         #endregion
 
@@ -289,7 +283,8 @@
 
         private static void SelfUlt()
         {
-            if (Player.IsRecalling() || Player.InFountain())
+            if (Player.IsRecalling() || Player.InFountain() || Player.IsInvulnerable || Player.HasBuffOfType(BuffType.SpellImmunity)
+               || Player.HasBuffOfType(BuffType.Invulnerability))
             {
                 return;
             }
@@ -376,6 +371,11 @@
                     if (ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName) != null
                         && ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName).IsActive())
                     {
+                        if (hero.IsInvulnerable || hero.HasBuffOfType(BuffType.SpellImmunity) || hero.HasBuffOfType(BuffType.Invulnerability))
+                        {
+                            return;
+                        }
+
                         spells[Spells.R].Cast(hero);
                     }
                 }
