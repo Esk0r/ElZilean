@@ -42,8 +42,6 @@
                 comboMenu.AddItem(
                     new MenuItem("ElZilean.Combo.W", "Use W to reset Q when target is marked").SetValue(true));
                 comboMenu.AddItem(new MenuItem("ElZilean.Combo.Ignite", "Use Ignite").SetValue(true));
-                comboMenu.AddItem(
-                    new MenuItem("ElZilean.Trick", "Q at nearby units").SetValue(new KeyBind("T".ToCharArray()[0], KeyBindType.Press)));
             }
 
             var harassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
@@ -93,6 +91,7 @@
 
             var miscMenu = Menu.AddSubMenu(new Menu("Misc", "Misc"));
             {
+                miscMenu.AddItem(new MenuItem("AA.Block", "Don't use AA before attack").SetValue(true));
                 miscMenu.AddItem(new MenuItem("ElZilean.Draw.off", "[Drawing] Drawings off").SetValue(false));
                 miscMenu.AddItem(new MenuItem("ElZilean.Draw.Q", "Draw Q").SetValue(new Circle()));
                 miscMenu.AddItem(new MenuItem("ElZilean.Draw.W", "Draw W").SetValue(new Circle()));
