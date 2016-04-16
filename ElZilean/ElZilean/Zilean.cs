@@ -312,11 +312,9 @@
             }
             else
             {
-                if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+                if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && spells[Spells.Q].IsReady() && Player.Distance(args.Target) < spells[Spells.Q].Range - 100)
                 {
-                    args.Process =
-                        !(spells[Spells.Q].IsReady()
-                          || Player.Distance(args.Target) >= 1000);
+                    args.Process = false;
                 }
             }
 
