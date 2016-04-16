@@ -236,7 +236,14 @@
 
             if (MenuCheck("ElZilean.Clear.Q") && minion.IsValidTarget() && spells[Spells.Q].IsReady())
             {
-                spells[Spells.Q].Cast(bestFarmLocation.Position);
+                if (MenuCheck("ElZilean.Clear.Mouse"))
+                {
+                    spells[Spells.Q].Cast(Game.CursorPos);
+                }
+                else
+                {
+                    spells[Spells.Q].Cast(bestFarmLocation.Position);
+                }
             }
 
             if (MenuCheck("ElZilean.Clear.W") && !spells[Spells.Q].IsReady())

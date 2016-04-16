@@ -70,6 +70,7 @@
             var clearMenu = Menu.AddSubMenu(new Menu("Laneclear", "LC"));
             {
                 clearMenu.AddItem(new MenuItem("ElZilean.Clear.Q", "Use Q").SetValue(true));
+                clearMenu.AddItem(new MenuItem("ElZilean.Clear.Mouse", "Cast Q to mouse").SetValue(false));
                 clearMenu.AddItem(new MenuItem("ElZilean.Clear.W", "Use W to reset bomb").SetValue(true));
             }
 
