@@ -125,7 +125,8 @@
 
             if (MenuCheck("ElZilean.Combo.W") && zileanQEnemyBomb != null)
             {
-                Utility.DelayAction.Add(10, () => { spells[Spells.W].Cast(); });
+                //Utility.DelayAction.Add(10, () => { });
+                spells[Spells.W].Cast();
             }
 
             if (MenuCheck("ElZilean.Combo.Ignite") && target.IsValidTarget(600f)
