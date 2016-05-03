@@ -94,8 +94,8 @@
         {
             var qTarget =
                 HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
-            var target = qTarget ?? TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
 
+            var target = qTarget ?? TargetSelector.GetTarget(spells[Spells.Q].Range, TargetSelector.DamageType.Magical);
             if (!target.IsValidTarget())
             {
                 return;
@@ -107,6 +107,11 @@
             if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
                 && target.IsValidTarget(spells[Spells.E].Range))
             {
+                if (!spells[Spells.Q].IsReady())
+                {
+                    return;
+                }
+
                 spells[Spells.E].Cast(target);
             }
 
@@ -125,7 +130,6 @@
 
             if (MenuCheck("ElZilean.Combo.W") && zileanQEnemyBomb != null)
             {
-                //Utility.DelayAction.Add(10, () => { });
                 spells[Spells.W].Cast();
             }
 
@@ -134,42 +138,6 @@
             {
                 Player.Spellbook.CastSpell(ignite, target);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="target"></param>
-        /// <returns></returns>
-        private static float ComboDamage(Obj_AI_Base target)
-        {
-            try
-            {
-                float damage = 0;
-
-                if (!Player.IsWindingUp)
-                {
-                    damage += (float)ObjectManager.Player.GetAutoAttackDamage(target, true);
-                }
-
-                if (spells[Spells.Q].IsReady())
-                {
-                    damage += spells[Spells.Q].GetDamage(target);
-                }
-
-                if (ignite != SpellSlot.Unknown || Player.Spellbook.CanUseSpell(ignite) == SpellState.Ready)
-                {
-                    damage += (float)Player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
-                }
-
-                return damage;
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception);
-            }
-
-            return 0;
         }
 
         private static void Flee()
