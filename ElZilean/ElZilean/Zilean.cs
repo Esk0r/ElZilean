@@ -104,25 +104,32 @@
             TargetSelector.SetTarget(target);
             Orbwalker.ForceTarget(target);
 
-            if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady()
-                && target.IsValidTarget(spells[Spells.E].Range))
+            if (MenuCheck("ElZilean.Combo.E") && spells[Spells.E].IsReady())
             {
-                if (!spells[Spells.Q].IsReady())
+                if (Player.GetAlliesInRange(spells[Spells.E].Range).Any())
                 {
-                    return;
-                }
+                    var closestToTarget =
+                        Player.GetAlliesInRange(spells[Spells.E].Range)
+                            .OrderByDescending(h => (h.PhysicalDamageDealtPlayer + h.MagicDamageDealtPlayer))
+                            .First();
 
-                spells[Spells.E].Cast(target);
+                    spells[Spells.W].Cast();
+                    Utility.DelayAction.Add(100, () => spells[Spells.E].Cast(closestToTarget));
+                }
+                else
+                {
+                    Utility.DelayAction.Add(100, () => spells[Spells.E].Cast(Player));
+                }
             }
 
             var zileanQEnemyBomb =
-               HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
+                HeroManager.Enemies.Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(spells[Spells.Q].Range));
 
             if (MenuCheck("ElZilean.Combo.Q") && spells[Spells.Q].IsReady()
                 && target.IsValidTarget(spells[Spells.Q].Range))
             {
                 var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance >= HitChance.High)
+                if (pred.Hitchance >= HitChance.VeryHigh)
                 {
                     spells[Spells.Q].Cast(pred.UnitPosition);
                 }
@@ -167,7 +174,7 @@
                 && target.IsValidTarget(spells[Spells.Q].Range))
             {
                 var pred = spells[Spells.Q].GetPrediction(target);
-                if (pred.Hitchance >= HitChance.High)
+                if (pred.Hitchance >= HitChance.VeryHigh)
                 {
                     spells[Spells.Q].Cast(pred.UnitPosition);
                 }
@@ -288,7 +295,8 @@
             }
             else
             {
-                if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && spells[Spells.Q].IsReady() && Player.Distance(args.Target) < spells[Spells.Q].Range - 100)
+                if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && spells[Spells.Q].IsReady()
+                    && Player.Distance(args.Target) < spells[Spells.Q].Range - 100)
                 {
                     args.Process = false;
                 }
@@ -305,8 +313,8 @@
 
         private static void SelfUlt()
         {
-            if (Player.IsRecalling() || Player.InFountain() || Player.IsInvulnerable || Player.HasBuffOfType(BuffType.SpellImmunity)
-               || Player.HasBuffOfType(BuffType.Invulnerability))
+            if (Player.IsRecalling() || Player.InFountain() || Player.IsInvulnerable
+                || Player.HasBuffOfType(BuffType.SpellImmunity) || Player.HasBuffOfType(BuffType.Invulnerability))
             {
                 return;
             }
@@ -337,7 +345,8 @@
                     if (ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName) != null
                         && ZileanMenu.Menu.Item("ElZilean.Cast.Ult.Ally" + hero.CharData.BaseSkinName).IsActive())
                     {
-                        if (hero.IsInvulnerable || hero.HasBuffOfType(BuffType.SpellImmunity) || hero.HasBuffOfType(BuffType.Invulnerability))
+                        if (hero.IsInvulnerable || hero.HasBuffOfType(BuffType.SpellImmunity)
+                            || hero.HasBuffOfType(BuffType.Invulnerability))
                         {
                             return;
                         }
