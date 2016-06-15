@@ -113,12 +113,10 @@
 
                 var igniteSlot = Player.GetSpellSlot("summonerdot");
 
-                if (igniteSlot == SpellSlot.Unknown)
+                if (igniteSlot != SpellSlot.Unknown)
                 {
-                    return;
+                    IgniteSpell = new Spell(igniteSlot);
                 }
-
-                IgniteSpell = new Spell(igniteSlot);
 
                 Q = new Spell(SpellSlot.Q, 900f);
                 W = new Spell(SpellSlot.W, Orbwalking.GetRealAutoAttackRange(Player));
@@ -291,7 +289,7 @@
                             return;
                         }
 
-                        E.Cast(closestEnemy);   
+                        E.Cast(closestEnemy);
                         return;
                     }
 
