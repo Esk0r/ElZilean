@@ -8,7 +8,7 @@
 
         private static void Main(string[] args)
         {
-            CustomEvents.Game.OnGameLoad += Zilean.Game_OnGameLoad;
+            CustomEvents.Game.OnGameLoad += Zilean.OnGameLoad;
         }
 
         #endregion
