@@ -236,7 +236,12 @@
                         hero.IsValidTarget(550f) && !hero.HasBuff("summonerdot") && !hero.IsZombie
                         && Player.GetSummonerSpellDamage(hero, Damage.SummonerSpell.Ignite) >= hero.Health);
 
-                if (kSableEnemy != null && IgniteSpell.Slot != SpellSlot.Unknown)
+                if (IgniteSpell.Slot == SpellSlot.Unknown)
+                {
+                    return;
+                }
+
+                if (kSableEnemy != null)
                 {
                     Player.Spellbook.CastSpell(IgniteSpell.Slot, kSableEnemy);
                 }
@@ -323,6 +328,10 @@
                 var isBombed =
                 HeroManager.Enemies
                     .FirstOrDefault(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(Q.Range));
+                if (!isBombed.IsValidTarget())
+                {
+                    return;
+                }
 
                 if (isBombed.IsValidTarget())
                 {
@@ -332,7 +341,7 @@
                     }
                 }
 
-                if (IsActive("ElZilean.Ignite") && IgniteSpell.Slot != SpellSlot.Unknown && isBombed != null)
+                /*if (IsActive("ElZilean.Ignite") && IgniteSpell.Slot != SpellSlot.Unknown && isBombed != null)
                 {
                     if (Q.GetDamage(isBombed) + IgniteSpell.GetDamage(isBombed) > isBombed.Health)
                     {
@@ -341,7 +350,7 @@
                             Player.Spellbook.CastSpell(IgniteSpell.Slot, isBombed);
                         }
                     }
-                }
+                }*/
             }
             catch (Exception e)
             {
