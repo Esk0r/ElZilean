@@ -122,7 +122,7 @@
                 E = new Spell(SpellSlot.E, 700f);
                 R = new Spell(SpellSlot.R, 900f);
 
-                Q.SetSkillshot(0.3f, 210f, 2000f, false, SkillshotType.SkillshotCircle);
+                Q.SetSkillshot(0.7f, 140f, int.MaxValue, false, SkillshotType.SkillshotCircle);
 
                 GenerateMenu();
 
@@ -313,7 +313,7 @@
                     var pred = Q.GetPrediction(target);
                     if (pred.Hitchance >= HitChance.VeryHigh)
                     {
-                        Q.Cast(pred.UnitPosition);
+                        Q.Cast(pred.CastPosition);
                     }
                 }
 
