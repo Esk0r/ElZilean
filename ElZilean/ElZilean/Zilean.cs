@@ -170,6 +170,7 @@
                     comboMenu.AddItem(new MenuItem("ElZilean.Combo.Q", "Use Q").SetValue(true));
                     comboMenu.AddItem(new MenuItem("ElZilean.Combo.W", "Use W").SetValue(true));
                     comboMenu.AddItem(new MenuItem("ElZilean.Combo.E", "Use E").SetValue(true));
+                    comboMenu.AddItem(new MenuItem("ElZilean.Ignite", "Use Ignite").SetValue(true));
                 }
 
                 Menu.AddSubMenu(comboMenu);
