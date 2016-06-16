@@ -18,7 +18,7 @@
         /// <value>
         ///     The Smitespell
         /// </value>
-        public static Spell IgniteSpell { get; set; }
+        private static Spell IgniteSpell { get; set; }
 
         #endregion
 
@@ -59,8 +59,8 @@
         /// <summary>
         ///     Check if Zilean has speed passive
         /// </summary>
-        public static bool HasSpeedBuff => Player.Buffs.Any(x => x.Name.ToLower().Contains("timewarp"));
- 
+        private static bool HasSpeedBuff => Player.Buffs.Any(x => x.Name.ToLower().Contains("timewarp"));
+
         /// <summary>
         ///     Gets or sets the Q spell
         /// </summary>
@@ -481,7 +481,7 @@
                 {
                     return;
                 }
-     
+
                 switch (Orbwalker.ActiveMode)
                 {
                     case Orbwalking.OrbwalkingMode.Combo:
