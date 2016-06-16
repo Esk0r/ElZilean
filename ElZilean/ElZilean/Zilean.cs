@@ -102,6 +102,12 @@
                     return;
                 }
 
+                var igniteSlot = Player.GetSpellSlot("summonerdot");
+                if (igniteSlot != SpellSlot.Unknown)
+                {
+                    IgniteSpell = new Spell(igniteSlot, 600f);
+                }
+
                 foreach (var ally in HeroManager.Allies)
                 {
                     IncomingDamageManager.AddChampion(ally);
@@ -110,13 +116,6 @@
 
                 IncomingDamageManager.RemoveDelay = 500;
                 IncomingDamageManager.Skillshots = true;
-
-                var igniteSlot = Player.GetSpellSlot("summonerdot");
-
-                if (igniteSlot != SpellSlot.Unknown)
-                {
-                    IgniteSpell = new Spell(igniteSlot);
-                }
 
                 Q = new Spell(SpellSlot.Q, 900f);
                 W = new Spell(SpellSlot.W, Orbwalking.GetRealAutoAttackRange(Player));
@@ -200,7 +199,7 @@
                 {
                     laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.Q", "Use Q").SetValue(true));
                     laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.W", "Use W").SetValue(true));
-                    laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.Mana", "Minimum mana").SetValue(new Slider(20, 0, 100)));
+                    laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.Mana", "Minimum mana").SetValue(new Slider(20)));
                 }
 
                 Menu.AddSubMenu(laneclearMenu);
@@ -210,7 +209,7 @@
                     fleeMenu.AddItem(
                         new MenuItem("ElZilean.Flee.Key", "Flee key").SetValue(
                             new KeyBind("A".ToCharArray()[0], KeyBindType.Press)));
-                    fleeMenu.AddItem(new MenuItem("ElZilean.Flee.Mana", "Minimum mana").SetValue(new Slider(20, 0, 100)));
+                    fleeMenu.AddItem(new MenuItem("ElZilean.Flee.Mana", "Minimum mana").SetValue(new Slider(20)));
                 }
 
                 Menu.AddSubMenu(fleeMenu);
@@ -230,16 +229,16 @@
         {
             try
             {
+                if (Player.GetSpellSlot("summonerdot") == SpellSlot.Unknown)
+                {
+                    return;
+                }
+
                 var kSableEnemy =
                     HeroManager.Enemies.FirstOrDefault(
                         hero =>
                         hero.IsValidTarget(550f) && !hero.HasBuff("summonerdot") && !hero.IsZombie
                         && Player.GetSummonerSpellDamage(hero, Damage.SummonerSpell.Ignite) >= hero.Health);
-
-                if (IgniteSpell.Slot == SpellSlot.Unknown)
-                {
-                    return;
-                }
 
                 if (kSableEnemy != null)
                 {
@@ -341,8 +340,13 @@
                     }
                 }
 
-                /*if (IsActive("ElZilean.Ignite") && IgniteSpell.Slot != SpellSlot.Unknown && isBombed != null)
+                if (IsActive("ElZilean.Ignite") && isBombed != null)
                 {
+                    if (Player.GetSpellSlot("summonerdot") == SpellSlot.Unknown)
+                    {
+                        return;
+                    }
+
                     if (Q.GetDamage(isBombed) + IgniteSpell.GetDamage(isBombed) > isBombed.Health)
                     {
                         if (isBombed.IsValidTarget(Q.Range))
@@ -350,7 +354,7 @@
                             Player.Spellbook.CastSpell(IgniteSpell.Slot, isBombed);
                         }
                     }
-                }*/
+                }
             }
             catch (Exception e)
             {
@@ -445,7 +449,7 @@
         {
             try
             {
-                var minion = MinionManager.GetMinions(Player.Position, Q.Range + E.Width);
+                var minion = MinionManager.GetMinions(Player.Position, Q.Range + Q.Width);
                 if (minion == null)
                 {
                     return;
@@ -461,6 +465,11 @@
                        MinionManager.GetMinions(Q.Range).Select(x => x.ServerPosition.To2D()).ToList(),
                        Q.Width,
                        Q.Range);
+
+                if (farmLocation.MinionsHit == 0)
+                {
+                    return;
+                }
 
                 if (IsActive("ElZilean.laneclear.Q") && Q.IsReady())
                 {
