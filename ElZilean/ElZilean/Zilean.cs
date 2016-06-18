@@ -327,12 +327,13 @@
                 var isBombed =
                 HeroManager.Enemies
                     .FirstOrDefault(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(Q.Range));
+
                 if (!isBombed.IsValidTarget())
                 {
                     return;
                 }
 
-                if (isBombed.IsValidTarget())
+                if (isBombed != null && isBombed.IsValidTarget(Q.Range))
                 {
                     if (IsActive("ElZilean.Combo.W"))
                     {
