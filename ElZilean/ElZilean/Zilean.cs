@@ -202,6 +202,8 @@
                 var laneclearMenu = new Menu("Laneclear", "Laneclear");
                 {
                     laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.Q", "Use Q").SetValue(true));
+                    laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.QMouse", "Cast Q to mouse").SetValue(false))
+                        .SetTooltip("Cast Q towards your mouse position");
                     laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.W", "Use W").SetValue(true));
                     laneclearMenu.AddItem(new MenuItem("ElZilean.laneclear.Mana", "Minimum mana").SetValue(new Slider(20)));
                 }
@@ -522,7 +524,13 @@
                     return;
                 }
 
-                if (IsActive("ElZilean.laneclear.Q") && Q.IsReady() && farmLocation.MinionsHit >= 3)
+                if (IsActive("ElZilean.laneclear.Q") && IsActive("ElZilean.laneclear.QMouse") && Q.IsReady())
+                {
+                    Q.Cast(Game.CursorPos);
+                }
+
+                if (IsActive("ElZilean.laneclear.Q") && Q.IsReady() 
+                    && !IsActive("ElZilean.laneclear.QMouse") && farmLocation.MinionsHit >= 3)
                 {
                     Q.Cast(farmLocation.Position.To3D());
                 }
