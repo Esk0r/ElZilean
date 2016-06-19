@@ -7,6 +7,8 @@
     using LeagueSharp;
     using LeagueSharp.Common;
 
+    using Color = System.Drawing.Color;
+
     internal class Zilean
     {
 
@@ -114,7 +116,6 @@
                     Console.WriteLine(@"[ELZILEAN] loaded champions: {0}", ally.ChampionName);
                 }
 
-                IncomingDamageManager.RemoveDelay = 500;
                 IncomingDamageManager.Skillshots = true;
 
                 Q = new Spell(SpellSlot.Q, 900f);
@@ -127,6 +128,7 @@
                 GenerateMenu();
 
                 Game.OnUpdate += OnUpdate;
+                Drawing.OnDraw += OnDraw;
             }
             catch (Exception exception)
             {
@@ -168,6 +170,8 @@
                 {
                     comboMenu.AddItem(new MenuItem("ElZilean.Combo.Q", "Use Q").SetValue(true));
                     comboMenu.AddItem(new MenuItem("ElZilean.Combo.W", "Use W").SetValue(true));
+                    comboMenu.AddItem(new MenuItem("ElZilean.Combo.W2", "Always reset Q").SetValue(false))
+                        .SetTooltip("Always reset Q even when the target is not marked");
                     comboMenu.AddItem(new MenuItem("ElZilean.Combo.E", "Use E").SetValue(true));
                     comboMenu.AddItem(new MenuItem("ElZilean.Ignite", "Use Ignite").SetValue(true));
                 }
@@ -214,7 +218,43 @@
 
                 Menu.AddSubMenu(fleeMenu);
 
+                var drawingsMenu = new Menu("Drawings", "Drawings");
+                {
+                    drawingsMenu.AddItem(new MenuItem("ElZilean.Draw.Off", "Disable drawings").SetValue(false));
+                    drawingsMenu.AddItem(new MenuItem("ElZilean.Draw.Q", "Draw Q").SetValue(new Circle()));
+                }
+
+                Menu.AddSubMenu(drawingsMenu);
+
+
                 Menu.AddToMainMenu();
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+            }
+        }
+
+        /// <summary>
+        ///     Called when the game draws itself.
+        /// </summary>
+        /// <param name="args">The <see cref="EventArgs" /> instance containing the event data.</param>
+        private static void OnDraw(EventArgs args)
+        {
+            try
+            {
+                if (IsActive("ElZilean.Draw.Off"))
+                {
+                    return;
+                }
+
+                if (Menu.Item("ElZilean.Draw.Q").GetValue<Circle>().Active)
+                {
+                    if (Q.Level > 0)
+                    {
+                        Render.Circle.DrawCircle(ObjectManager.Player.Position, Q.Range, Color.DodgerBlue);
+                    }
+                }
             }
             catch (Exception exception)
             {
@@ -295,20 +335,19 @@
                         }
 
                         E.Cast(closestEnemy);
-                        return;
                     }
-
-                    if (Player.GetAlliesInRange(E.Range).Any())
+                                       
+                    if (Player.GetAlliesInRange(E.Range).Any() && Player.GetEnemiesInRange(800f).Count >= 1)
                     {
                         var closestToTarget = Player.GetAlliesInRange(E.Range)
                           .OrderByDescending(h => (h.PhysicalDamageDealtPlayer + h.MagicDamageDealtPlayer))
                           .FirstOrDefault();
 
-                        Utility.DelayAction.Add(100, () => E.Cast(closestToTarget));
+                        E.Cast(closestToTarget);
                     }
                 }
 
-                if (IsActive("ElZilean.Combo.Q") && Q.IsReady() && target.IsValidTarget(Q.Range))
+                if (IsActive("ElZilean.Combo.Q") && Q.IsReady() && target.IsValidTarget(Q.Range) && !target.IsZombie)
                 {
                     var pred = Q.GetPrediction(target);
                     if (pred.Hitchance >= HitChance.VeryHigh)
@@ -317,24 +356,35 @@
                     }
                 }
 
-                if (IsActive("ElZilean.Combo.W") && W.IsReady() && !Q.IsReady())
+                if (IsActive("ElZilean.Combo.W") && IsActive("ElZilean.Combo.W2") && W.IsReady() && !Q.IsReady())
                 {
+                    if (Q.Instance.CooldownExpires - Game.Time < 3)
+                    {
+                        return;
+                    }
+
                     W.Cast();
-                    Console.WriteLine("Resetted W");
+                    Console.WriteLine("ALWAYS RESET Q");
                 }
 
                 // Check if target has a bomb
                 var isBombed =
                 HeroManager.Enemies
-                    .FirstOrDefault(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(Q.Range));
+                    .Find(x => x.HasBuff("ZileanQEnemyBomb") && x.IsValidTarget(Q.Range));
 
                 if (!isBombed.IsValidTarget())
                 {
                     return;
                 }
-
+               
                 if (isBombed != null && isBombed.IsValidTarget(Q.Range))
                 {
+                    if (Q.Instance.CooldownExpires - Game.Time < 3)
+                    {
+                        Console.WriteLine("3");
+                        return;
+                    }
+
                     if (IsActive("ElZilean.Combo.W"))
                     {
                         W.Cast();
@@ -472,7 +522,7 @@
                     return;
                 }
 
-                if (IsActive("ElZilean.laneclear.Q") && Q.IsReady())
+                if (IsActive("ElZilean.laneclear.Q") && Q.IsReady() && farmLocation.MinionsHit >= 3)
                 {
                     Q.Cast(farmLocation.Position.To3D());
                 }
