@@ -230,7 +230,7 @@
 
                 var miscMenu = new Menu("Misc", "Misc");
                 {
-                    drawingsMenu.AddItem(new MenuItem("ElZilean.Q.Stun", "Auto Q on stunned targets").SetValue(false));
+                    miscMenu.AddItem(new MenuItem("ElZilean.Q.Stun", "Auto Q on stunned targets").SetValue(false));
                 }
 
                 Menu.AddSubMenu(miscMenu);
