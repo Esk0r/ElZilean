@@ -228,6 +228,13 @@
 
                 Menu.AddSubMenu(drawingsMenu);
 
+                var miscMenu = new Menu("Misc", "Misc");
+                {
+                    drawingsMenu.AddItem(new MenuItem("ElZilean.Q.Stun", "Auto Q on stunned targets").SetValue(false));
+                }
+
+                Menu.AddSubMenu(miscMenu);
+
 
                 Menu.AddToMainMenu();
             }
@@ -449,7 +456,7 @@
         }
 
         /// <summary>
-        ///     Harass logic by Chewymoon (pls no kill)
+        ///     Harass logic
         /// </summary>
         private static void OnHarass()
         {
@@ -496,7 +503,7 @@
         }
 
         /// <summary>
-        ///     The laneclear "logic"
+        ///     The laneclear logic
         /// </summary>
         private static void OnLaneclear()
         {
@@ -547,6 +554,23 @@
         }
 
         /// <summary>
+        ///     Gets the stun duration
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        private static float GetStunDuration(Obj_AI_Base target)
+        {
+            return target.Buffs.Where(b => b.IsActive && Game.Time < b.EndTime &&
+                (b.Type == BuffType.Charm ||
+                b.Type == BuffType.Knockback ||
+                b.Type == BuffType.Stun ||
+                b.Type == BuffType.Invulnerability ||
+                b.Type == BuffType.Suppression ||
+                b.Type == BuffType.Snare)).Aggregate(0f, (current, buff) => Math.Max(current, buff.EndTime)) -
+                Game.Time;
+        }
+
+        /// <summary>
         ///     Called when the game updates
         /// </summary>
         /// <param name="args">The <see cref="EventArgs" /> instance containing the event data.</param>
@@ -580,6 +604,19 @@
                 if (Menu.Item("ElZilean.Flee.Key").GetValue<KeyBind>().Active)
                 {
                     OnFlee();
+                }
+
+                if (IsActive("ElZilean.Q.Stun"))
+                {
+                    var target = HeroManager.Enemies.FirstOrDefault(h => h.IsValidTarget(Q.Range) && GetStunDuration(h) >= Q.Delay);
+                    if (target != null)
+                    {
+                        if (Q.IsReady())
+                        {
+                            Q.Cast(target.ServerPosition);
+                        }
+                        Utility.DelayAction.Add(100, () => W.Cast());
+                    }
                 }
 
                 foreach (var ally in HeroManager.Allies)
